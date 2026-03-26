@@ -5,25 +5,85 @@
 [![OpenAI](https://img.shields.io/badge/OpenAI-2.7.0-412991?style=flat-square&logo=openai)](https://openai.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
+
 AIOS is a comprehensive, AI-enhanced dealership management platform built on ASP.NET Core MVC. It integrates OpenAI's language models to provide intelligent pricing recommendations, automated loan approvals, sales training simulations, and trade-in valuations.
 
 ---
 
-## Table of Contentslly
+## Features
 
-- [Architecture Overview](#architecture-overview)
-- [Technology Stack](#technology-stack)
-- [Features](#features)
-- [Project Structure](#project-structure)
+### 🤖 AI-Powered Modules
+
+| Module | Description |
+|--------|-------------|
+| **AI Pricing Engine** | Intelligent vehicle pricing recommendations based on market analysis |
+| **Loan Approval AI** | Automated loan pre-approval decisions using AI assessment |
+| **Sales Training Simulator** | Interactive AI-driven sales scenario training |
+| **Trade-In Valuator** | AI-powered vehicle trade-in value estimation |
+
+### 📊 Core Management Features
+
+- **Customer Relationship Management (CRM)** - Full customer lifecycle management
+- **Vehicle Inventory Management** - Track and manage dealership inventory
+- **Appointment Scheduling** - Service and sales appointment coordination
+- **Finance Calculator** - Loan payment and financing calculations
+- **Newsletter Management** - Customer communication and marketing
+- **Service Department** - Service scheduling and tracking
+
+---
+
+## User Interface
+
+<table>
+  <tr>
+    <th>Newsletter</th>
+    <th>Customer Management</th>
+    <th>Trade-In Value Estimator</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="./screenshots/newsletter.png" width="250"/></td>
+    <td align="center"><img src="./screenshots/customers.png" width="250"/></td>
+    <td align="center"><img src="./screenshots/trade-in-value.png" width="250"/></td>
+  </tr>
+  <tr>
+    <th colspan="2">Appointment Calendar & Management</th>
+    <th>Loan Approval Results</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="./screenshots/calender.png" width="250"/><br/>Calendar View</td>
+    <td align="center"><img src="./screenshots/edit-appointment.png" width="250"/><br/>Editing Appointment</td>
+    <td align="center"><img src="./screenshots/loan-results.png" width="250"/></td>
+  </tr>
+  <tr>
+    <th>Vehicle Inventory</th>
+    <th>Adding New Vehicle</th>
+    <th colspan="1">AI Sales Training Simulator</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="./screenshots/inventory.png" width="250"/></td>
+    <td align="center"><img src="./screenshots/adding-inventory.png" width="250"/></td>
+    <td align="center"><img src="./screenshots/training-sim.png" width="250"/><br/>Simulator<br/><img src="./screenshots/training-sim-results.png" width="250"/><br/>Results</td>
+  </tr>
+</table>
+
+---
+
+## Table of Contents
+
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Configuration](#configuration)
+- [Architecture Overview](#architecture-overview)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
 - [API Reference](#api-reference)
 - [Database Schema](#database-schema)
-- [Screenshots](#screenshots)
+- [Dependency Injection Configuration](#dependency-injection-configuration)
+- [CORS Configuration](#cors-configuration)
 - [Contributing](#contributing)
 - [License](#license)
+- [Project Link](#project-link)
 
 ---
 
