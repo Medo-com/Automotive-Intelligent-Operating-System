@@ -1,0 +1,706 @@
+﻿@{
+    ViewData["Title"] = "Customers";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers Database</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 20px;
+            color: #333;
+        }
+
+        .aios-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin: 20px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search-filter-section {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .search-input {
+            border: 2px solid #e0e0e0;
+            padding: 10px 15px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+            .search-input:focus {
+                border-color: #4da3ff;
+                box-shadow: 0 0 0 3px rgba(77,163,255,0.1);
+            }
+
+        .aios-table th,
+        .aios-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .aios-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        .customer-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .vehicle-badge {
+            padding: 6px 12px;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .btn-aios {
+            background-color: #4da3ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+            .btn-aios:hover {
+                background-color: #3a8ee6;
+                transform: translateY(-1px);
+            }
+
+        /* Toasts */
+        .toast-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 99999;
+        }
+
+        .toast {
+            min-width: 350px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .toast-success {
+            border-left: 4px solid #28a745;
+        }
+
+        .toast-error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .toast-warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        /* Confirm Overlay */
+        .custom-confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-confirm-dialog {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+
+        .custom-confirm-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .confirm-yes {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .confirm-no {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Delete Confirm -->
+    <div class="custom-confirm-overlay" id="confirmOverlay">
+        <div class="custom-confirm-dialog">
+            <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">Delete Customer?</h5>
+            <p>This action cannot be undone.</p>
+
+            <div class="custom-confirm-buttons">
+                <button class="confirm-no" id="confirmNo">Cancel</button>
+                <button class="confirm-yes" id="confirmYes">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toast-container">
+
+        <div id="successToast" class="toast toast-success">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                    <span id="successMessage"></span>
+                </div>
+                <button class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+
+        <div id="errorToast" class="toast toast-error">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+                <button class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+
+        <div id="warningToast" class="toast toast-warning">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                    <span id="warningMessage"></span>
+                </div>
+                <button class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+
+    </div>
+
+    <h2 class="page-title">Customers</h2>
+
+    <div class="aios-card fade-in">
+
+        <!-- Search + Filter -->
+        <div class="search-filter-section mb-4">
+            <div class="row">
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Search</label>
+                    <input type="text" id="searchInput" class="form-control search-input" placeholder="Search customers...">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Filter By</label>
+                    <select id="filterType" class="form-select">
+                        <option value="all">All</option>
+                        <option value="name">Customer Name</option>
+                        <option value="email">Email</option>
+                        <option value="phone">Phone</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="vin">VIN</option>
+                    </select>
+                    <button class="btn-aios mt-2 w-100" onclick="performSearch()">
+                        <i class="bi bi-funnel"></i> Apply Filters
+                    </button>
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <button class="btn-aios w-100" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                        <i class="bi bi-plus-circle"></i> Add Customer
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <span id="resultsCount" class="text-muted mb-2">Loading...</span>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading text-center">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Loading customers...</p>
+        </div>
+
+        <!-- Table -->
+        <div id="customersTable" class="table-responsive" style="display:none;">
+            <table class="aios-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Vehicle</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="noResults" style="display:none;" class="text-center py-5">
+            <i class="bi bi-search" style="font-size:3rem;color:#ccc;"></i>
+            <p class="text-muted mt-2">No customers found.</p>
+        </div>
+
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add Customer</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="addCustomerForm">
+
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input id="customerName" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input id="customerEmail" type="email" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phone *</label>
+                            <input id="customerPhone" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle *</label>
+                            <input id="customerVehicle" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">VIN *</label>
+                            <input id="customerVIN" class="form-control" required>
+                        </div>
+
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveCustomer()">
+                        <i class="bi bi-save"></i> Save Customer
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- View Customer Modal (READ ONLY) -->
+    <div class="modal fade" id="viewCustomerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-eye"></i> Customer Details</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p><strong>Name:</strong> <span id="viewName"></span></p>
+                    <p><strong>Email:</strong> <span id="viewEmail"></span></p>
+                    <p><strong>Phone:</strong> <span id="viewPhone"></span></p>
+                    <p><strong>Vehicle:</strong> <span id="viewVehicle"></span></p>
+                    <p><strong>VIN:</strong> <span id="viewVIN"></span></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" id="editBtn">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div class="modal fade" id="editCustomerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Customer</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="editCustomerForm">
+
+                        <input type="hidden" id="editId">
+
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input id="editName" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input id="editEmail" type="email" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input id="editPhone" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle</label>
+                            <input id="editVehicle" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">VIN</label>
+                            <input id="editVIN" class="form-control">
+                        </div>
+
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-success" onclick="saveEditedCustomer()">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        /* TOAST SYSTEM */
+        function showToast(type, message) {
+            const toastEl = document.getElementById(type + "Toast");
+            const msgEl = document.getElementById(type + "Message");
+            msgEl.textContent = message;
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 2000, autohide: true });
+            toast.show();
+        }
+
+        const showSuccess = msg => showToast("success", msg);
+        const showError = msg => showToast("error", msg);
+        const showWarning = msg => showToast("warning", msg);
+
+        /* CONFIRM DELETE */
+        function confirmDelete() {
+            return new Promise(resolve => {
+                const overlay = document.getElementById("confirmOverlay");
+                const yesBtn = document.getElementById("confirmYes");
+                const noBtn = document.getElementById("confirmNo");
+
+                overlay.style.display = "flex";
+
+                const finish = result => {
+                    overlay.style.display = "none";
+                    yesBtn.removeEventListener("click", yes);
+                    noBtn.removeEventListener("click", no);
+                    resolve(result);
+                };
+
+                const yes = () => finish(true);
+                const no = () => finish(false);
+
+                yesBtn.addEventListener("click", yes);
+                noBtn.addEventListener("click", no);
+            });
+        }
+
+        /* DATA */
+        const API_URL = "https://localhost:7123/api/customers";
+        let allCustomers = [];
+        let selectedCustomer = null;
+
+        async function loadCustomers() {
+            try {
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error();
+
+                allCustomers = await res.json();
+                displayCustomers(allCustomers);
+
+                document.getElementById("loadingState").style.display = "none";
+                document.getElementById("customersTable").style.display = "block";
+
+            } catch {
+                document.getElementById("loadingState").innerHTML =
+                    `<p class='text-danger'>Failed to load customers.</p>`;
+            }
+        }
+
+        function displayCustomers(list) {
+            const tbody = document.getElementById("customersTableBody");
+            tbody.innerHTML = "";
+
+            if (list.length === 0) {
+                document.getElementById("customersTable").style.display = "none";
+                document.getElementById("noResults").style.display = "block";
+                document.getElementById("resultsCount").textContent = "0 customers";
+                return;
+            }
+
+            list.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><div class="customer-name">${c.name}</div></td>
+                        <td>${c.email}</td>
+                        <td>${c.phone}</td>
+                        <td><span class="vehicle-badge">${c.vehicle}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                                onclick="viewCustomer('${c.id}')">
+                                <i class="bi bi-eye"></i>
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-danger"
+                                onclick="deleteCustomer('${c.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+
+            document.getElementById("resultsCount").innerHTML =
+                `Showing <strong>${list.length}</strong> customers`;
+
+            document.getElementById("customersTable").style.display = "block";
+            document.getElementById("noResults").style.display = "none";
+        }
+
+        /* SAVE CUSTOMER */
+        async function saveCustomer() {
+            const name = customerName.value.trim();
+            const email = customerEmail.value.trim();
+            const phone = customerPhone.value.trim();
+            const vehicle = customerVehicle.value.trim();
+            const vin = customerVIN.value.trim();
+
+            if (!name || !email || !phone || !vehicle || !vin) {
+                showWarning("Please fill all fields");
+                return;
+            }
+
+            const customer = { name, email, phone, vehicle, vin };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(customer)
+                });
+
+                if (!res.ok) throw new Error();
+
+                bootstrap.Modal.getInstance(addCustomerModal).hide();
+                addCustomerForm.reset();
+                await loadCustomers();
+                showSuccess("Customer added successfully!");
+
+            } catch {
+                showError("Failed to save customer.");
+            }
+        }
+
+        /* DELETE CUSTOMER */
+        async function deleteCustomer(id) {
+            const confirmed = await confirmDelete();
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+                if (!res.ok) throw new Error();
+
+                await loadCustomers();
+                showSuccess("Customer deleted successfully!");
+
+            } catch {
+                showError("Failed to delete customer.");
+            }
+        }
+
+        /* VIEW CUSTOMER */
+        function viewCustomer(id) {
+            selectedCustomer = allCustomers.find(x => x.id === id);
+
+            if (!selectedCustomer) {
+                showError("Customer not found.");
+                return;
+            }
+
+            // fill read-only modal
+            document.getElementById("viewName").textContent = selectedCustomer.name;
+            document.getElementById("viewEmail").textContent = selectedCustomer.email;
+            document.getElementById("viewPhone").textContent = selectedCustomer.phone;
+            document.getElementById("viewVehicle").textContent = selectedCustomer.vehicle;
+            document.getElementById("viewVIN").textContent = selectedCustomer.vin;
+
+            // show modal
+            const modal = new bootstrap.Modal(document.getElementById("viewCustomerModal"));
+            modal.show();
+
+            // attach edit button
+            document.getElementById("editBtn").onclick = openEditModal;
+        }
+
+        /* OPEN EDIT MODAL */
+        function openEditModal() {
+            if (!selectedCustomer) return;
+
+            // close view modal
+            bootstrap.Modal.getInstance(document.getElementById("viewCustomerModal")).hide();
+
+            // fill edit modal fields
+            editId.value = selectedCustomer.id;
+            editName.value = selectedCustomer.name;
+            editEmail.value = selectedCustomer.email;
+            editPhone.value = selectedCustomer.phone;
+            editVehicle.value = selectedCustomer.vehicle;
+            editVIN.value = selectedCustomer.vin;
+
+            const modal = new bootstrap.Modal(document.getElementById("editCustomerModal"));
+            modal.show();
+        }
+
+        /* SAVE EDITED CUSTOMER */
+        async function saveEditedCustomer() {
+            const id = editId.value;
+
+            const updated = {
+                name: editName.value.trim(),
+                email: editEmail.value.trim(),
+                phone: editPhone.value.trim(),
+                vehicle: editVehicle.value.trim(),
+                vin: editVIN.value.trim()
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updated)
+                });
+
+                if (!res.ok) throw new Error();
+
+                bootstrap.Modal.getInstance(editCustomerModal).hide();
+                await loadCustomers();
+                showSuccess("Customer updated successfully!");
+
+            } catch {
+                showError("Failed to update customer.");
+            }
+        }
+
+        /* SEARCH */
+        function performSearch() {
+            const query = searchInput.value.toLowerCase();
+            const type = filterType.value;
+
+            if (!query) {
+                displayCustomers(allCustomers);
+                return;
+            }
+
+            const filtered = allCustomers.filter(c => {
+                const value = (type === "all")
+                    ? `${c.name} ${c.email} ${c.phone} ${c.vehicle} ${c.vin}`.toLowerCase()
+                    : c[type].toLowerCase();
+
+                return value.includes(query);
+            });
+
+            displayCustomers(filtered);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadCustomers();
+
+            searchInput.addEventListener("keyup", e => {
+                if (e.key === "Enter") performSearch();
+            });
+        });
+
+    </script>
+
+</body>
+</html>

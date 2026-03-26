@@ -1,0 +1,42 @@
+﻿@model List<AIOS.Models.Vehicle>
+
+@{
+    ViewData["Title"] = "Inventory";
+}
+
+<h2 class="page-title">Vehicle Inventory</h2>
+
+<div class="aios-card fade-in">
+
+    <a href="/Inventory/Add" class="btn-aios">Add Vehicle</a>
+
+    <table class="aios-table mt-3">
+        <thead>
+            <tr>
+                <th>Photo</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>KMs</th>
+                <th>VIN</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var v in Model)
+            {
+                <tr onclick="location.href='/Inventory/Details/@v.Id'" style="cursor:pointer;">
+                    <td><img src="@v.PhotoUrl" style="width:80px;height:50px;object-fit:cover;border-radius:6px;" /></td>
+                    <td>@v.Make</td>
+                    <td>@v.Model</td>
+                    <td>@v.Year</td>
+                    <td>@v.Kms.ToString("N0")</td>
+                    <td>@v.VIN</td>
+                    <td>@v.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

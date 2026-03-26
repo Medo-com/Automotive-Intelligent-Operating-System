@@ -1,0 +1,323 @@
+﻿@{
+    ViewData["Title"] = "AI Sales Training Simulator";
+}
+
+<h2 class="page-title">AI Sales Training Simulator</h2>
+
+<div class="aios-card fade-in mb-4">
+    <h4 class="mb-3">Configure Simulation</h4>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Customer Personality</label>
+            <select id="personality" class="aios-input">
+                <option value="Analytical">Analytical</option>
+                <option value="Emotional">Emotional</option>
+                <option value="Impatient">Impatient</option>
+                <option value="Cheap">Price-Focused</option>
+                <option value="Skeptical">Skeptical</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Scenario</label>
+            <select id="scenario" class="aios-input">
+                <option value="PaymentTooHigh">Payment is too high</option>
+                <option value="TradeInLow">Trade-in value is too low</option>
+                <option value="Undecided">Customer is undecided</option>
+                <option value="ShoppingAround">Customer is shopping other dealers</option>
+            </select>
+        </div>
+
+        <div class="col-12 mt-3">
+            <button id="startSimulation" class="btn-aios">Start Simulation</button>
+        </div>
+    </div>
+</div>
+
+<div class="aios-card fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0">Conversation</h4>
+        <span id="simStatus" class="badge bg-secondary">Not started</span>
+    </div>
+
+    <div id="chatWindow" class="chat-window">
+        <div class="chat-placeholder text-muted">
+            Choose a personality and scenario, then click <strong>Start Simulation</strong>.
+        </div>
+    </div>
+
+    <div class="chat-input-row mt-3">
+        <textarea id="salesInput" class="chat-input" rows="1"
+                  placeholder="Type your response as the salesperson..." disabled></textarea>
+        <button id="sendBtn" class="btn-aios ms-2" disabled>Send</button>
+    </div>
+
+    <div id="coachBox" class="coach-box mt-3" style="display:none;">
+        <div class="coach-title">Coach Feedback</div>
+        <div id="coachText" class="coach-text"></div>
+    </div>
+</div>
+
+<script>
+    (function () {
+
+        let conversation = [];
+        let currentPersonality = null;
+        let currentScenario = null;
+        let simulationStarted = false;
+
+        const chatWindow = document.getElementById("chatWindow");
+        const salesInput = document.getElementById("salesInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const startBtn = document.getElementById("startSimulation");
+        const simStatus = document.getElementById("simStatus");
+        const coachBox = document.getElementById("coachBox");
+        const coachText = document.getElementById("coachText");
+
+        /* TYPEWRITER ANIMATION */
+        async function typeMessage(element, text) {
+            element.innerHTML = "";
+            for (let i = 0; i < text.length; i++) {
+                element.innerHTML += text[i];
+                await new Promise(r => setTimeout(r, 15)); // typing speed
+            }
+        }
+
+        function addMessage(role, text, animated = false) {
+            const msg = document.createElement("div");
+            msg.classList.add("chat-message", role === "salesperson" ? "msg-sales" : "msg-customer");
+
+            const bubble = document.createElement("div");
+            bubble.classList.add("chat-text");
+
+            if (animated) {
+                bubble.classList.add("typing");
+                msg.appendChild(bubble);
+                chatWindow.appendChild(msg);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                typeMessage(bubble, text).then(() => {
+                    bubble.classList.remove("typing");
+                });
+            } else {
+                bubble.innerText = text;
+                msg.appendChild(bubble);
+                chatWindow.appendChild(msg);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        }
+
+        function resetChat() {
+            conversation = [];
+            chatWindow.innerHTML = "";
+            coachBox.style.display = "none";
+            coachText.innerText = "";
+        }
+
+        /* START SIM */
+        startBtn.addEventListener("click", () => {
+            currentPersonality = document.getElementById("personality").value;
+            currentScenario = document.getElementById("scenario").value;
+
+            resetChat();
+            simulationStarted = true;
+
+            simStatus.className = "badge bg-success";
+            simStatus.innerText = "Simulation running";
+
+            salesInput.disabled = false;
+            sendBtn.disabled = false;
+            salesInput.value = "";
+            salesInput.focus();
+
+            fetch('/api/ai/sales-simulator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    personality: currentPersonality,
+                    scenario: currentScenario,
+                    userMessage: "",
+                    history: []
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                conversation.push({ role: "customer", content: data.customerReply });
+                addMessage("customer", data.customerReply, true);
+
+                if (data.coachComment) {
+                    coachBox.style.display = "block";
+                    coachText.innerText = data.coachComment;
+                }
+            });
+        });
+
+        /* SEND MESSAGE */
+        function sendMessage() {
+            const text = salesInput.value.trim();
+            if (!text || !simulationStarted) return;
+
+            addMessage("salesperson", text);
+            conversation.push({ role: "salesperson", content: text });
+            salesInput.value = "";
+
+            fetch('/api/ai/sales-simulator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    personality: currentPersonality,
+                    scenario: currentScenario,
+                    userMessage: text,
+                    history: conversation
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                conversation.push({ role: "customer", content: data.customerReply });
+                addMessage("customer", data.customerReply, true);
+
+                if (data.coachComment) {
+                    coachBox.style.display = "block";
+                    coachText.innerText = data.coachComment;
+                }
+            });
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+
+        /* ENTER to send */
+        salesInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        /* Auto resize input */
+        salesInput.addEventListener("input", () => {
+            salesInput.style.height = "auto";
+            salesInput.style.height = salesInput.scrollHeight + "px";
+        });
+
+    })();
+</script>
+
+<style>
+    .chat-window {
+        border: 1px solid #d9d9d9;
+        border-radius: 16px;
+        padding: 20px;
+        height: 420px;
+        overflow-y: auto;
+        background: #fdfdfd;
+        box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
+        scroll-behavior: smooth;
+    }
+
+    .chat-placeholder {
+        text-align: center;
+        margin-top: 100px;
+        opacity: 0.6;
+        font-size: 1rem;
+    }
+
+    .chat-message {
+        margin-bottom: 16px;
+        max-width: 75%;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .msg-customer .chat-text {
+        background: #e8ecf7;
+        padding: 12px 16px;
+        border-radius: 14px 14px 14px 4px;
+        font-size: 1rem;
+        color: #1f2d3d;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .msg-sales {
+        margin-left: auto;
+        text-align: right;
+    }
+
+        .msg-sales .chat-text {
+            background: #2563eb;
+            padding: 12px 16px;
+            border-radius: 14px 14px 4px 14px;
+            color: white;
+            font-size: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+    .typing {
+        border-right: 2px solid #777;
+        animation: cursorBlink .6s infinite;
+    }
+
+    @@keyframes cursorBlink {
+        0%, 100%
+
+    {
+        border-color: transparent;
+    }
+
+    50% {
+        border-color: #777;
+    }
+
+    }
+
+    .chat-input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chat-input {
+        flex: 1;
+        max-height: 160px;
+        resize: none;
+        border-radius: 14px;
+        border: 1px solid #c9c9c9;
+        padding: 12px 14px;
+        background: white;
+        transition: box-shadow 0.2s;
+        font-size: 1rem;
+    }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.2);
+        }
+
+    .coach-box {
+        border-radius: 12px;
+        border: 1px solid #d0ddff;
+        background: #f2f5ff;
+        padding: 14px 16px;
+    }
+
+    .coach-title {
+        color: #1d4ed8;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
