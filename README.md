@@ -93,7 +93,7 @@ AIOS is a comprehensive, AI-enhanced automotive dealership management platform. 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/medo-com/Automotive-Intelligent-Operating-System.git
+   git clone https://github.com/medosyntax/Automotive-Intelligent-Operating-System.git
    cd Automotive-Intelligent-Operating-System
    ```
 
